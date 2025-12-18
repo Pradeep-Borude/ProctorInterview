@@ -1,6 +1,5 @@
 // src/pages/InterviewRoom.jsx
 import { useEffect, useRef, useState } from 'react';
-// import SimplePeer from 'simple-peer';
 import SimplePeer from 'simple-peer/simplepeer.min.js';
 import { useSocket } from '../contexts/SocketContext';
 
@@ -124,6 +123,8 @@ export default function InterviewRoom({ roomId, role }) {
       window.removeEventListener('mousemove', onMouseMove);
       clearInterval(interval);
     };
+
+  useEffect()
   }, [socket, role]);
 
   // 4) Receive proctoring (interviewer side)
