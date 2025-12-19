@@ -27,8 +27,7 @@ export default function UserRegister() {
       );
 
       alert(response.data.message);
-      navigate('/home');
-
+ navigate(`/user/${response.data.user.role}/${response.data.user._id}`);
     } catch (error) {
       const msg = error.response?.data?.message || 'Registration failed';
       alert(msg);

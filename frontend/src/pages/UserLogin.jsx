@@ -17,10 +17,10 @@ const navigate = useNavigate();
       'http://localhost:3000/api/auth/user/login',
       { email, password },
       { withCredentials: true }
-    );
+    );  
 
-    alert(response.data.message);
-    navigate('/home');
+    console.log(response.data);
+    navigate(`/user/${response.data.user.role}/${response.data.user._id}`);
 
   } catch (err) {
     const msg = err.response?.data?.message || "Something went wrong";

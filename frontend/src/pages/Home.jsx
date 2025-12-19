@@ -32,7 +32,7 @@ export default function Home() {
       <div className="hero-section">
         <h1 className="hero-title">ProctorInterview workspace</h1>
         <p className="hero-subtitle">
-          connected by heart , bredge the distance
+          connect by heart, bridge the distance
         </p>
       </div>
 
