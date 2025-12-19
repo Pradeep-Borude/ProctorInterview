@@ -4,6 +4,8 @@ import { SocketProvider } from "./contexts/SocketContext";
 import InterviewRoom from "./pages/InterviewRoom";
 import Home from "./pages/Home";
 import UserLogin from "./pages/UserLogin";
+import UserRegister from "./pages/UserRegister";
+import InterviewerDashboard from "./pages/InterviewerDashboard";
 import "./styles/global.css";
 
 function InterviewRoomWrapper() {
@@ -24,8 +26,12 @@ export default function App() {
         <div >
           <Routes>
             <Route path="/" element={<UserLogin />} />
-            <Route path="/home" element={<Home />} />
+            <Route path="/user/register" element={<UserRegister />} />
+            <Route path="/user/:role/:userID" element={<InterviewerDashboard />} />
             <Route path="/interview" element={<InterviewRoomWrapper />} />
+            {/* <Route path="/test" element={<TestUI />} /> */}
+
+            
           </Routes>
         </div>
       </Router>
