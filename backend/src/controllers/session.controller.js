@@ -7,6 +7,20 @@ async function createSession(req, res) {
     //  userId JWT middleware se aayega
     const userId = req.user.id;
 
+    
+  //  already active?
+  const existingSession = await sessionModel.findOne({
+    hostId: userId,
+    status: { $in: ["waiting", "live"] }
+  });
+
+ if (existingSession) {
+    return res.status(400).json({
+      message: "You already have an active session",
+      roomId: existingSession.roomId
+    });
+  }
+
     const roomId = "CPSB-" + uuidv4().slice(0, 8);
 
     const session = await sessionModel.create({
