@@ -92,10 +92,40 @@ function logoutUser(req, res) {
   });
 }
 
+async function verifyUser(req, res) {
+  try {
+
+    const token = req.cookies.userToken;
+    if (!token) {
+      return res.status(401).json({ success: false, message: "Not authenticated" });
+    }
+    const userId = req.user.id;
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        message: "UserId not found ",
+        userId
+      });
+    }
+    res.status(200).json({
+      message: "User verified successfully", user: {
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+
+      }
+    });
+
+  } catch (err) { }
+
+
+}
+
 
 
 module.exports = {
   registerUser,
   loginUser,
-  logoutUser
+  logoutUser,
+  verifyUser
 };
