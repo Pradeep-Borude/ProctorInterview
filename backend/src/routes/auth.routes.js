@@ -9,6 +9,7 @@ const router = express.Router();
 router.post("/user/register", authController.registerUser);
 router.post("/user/login", authController.loginUser);
 router.get("/user/logout", authController.logoutUser);
+
 // verify user
 router.get("/user/getUserData/",
     protect,
@@ -21,5 +22,21 @@ router.post(
     protect,
     sessionController.createSession
 );
+
+// session end
+router.post(
+  "/session/end",
+  protect,
+  sessionController.endSession
+);
+
+
+// verify room
+router.post(
+    "/session/verify-room",
+     protect,
+    sessionController.verifyRoom
+);
+
 
 module.exports = router;
