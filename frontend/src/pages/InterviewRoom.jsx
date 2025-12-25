@@ -1,102 +1,96 @@
-// src/pages/InterviewRoom.jsx
 import { useEffect, useRef, useState } from 'react';
 import SimplePeer from 'simple-peer/simplepeer.min.js';
 import { useSocket } from '../contexts/SocketContext';
+import { useParams } from 'react-router-dom';
+import axios from 'axios';
 
-export default function InterviewRoom({ roomId, role }) {
+export default function InterviewRoom() {
   const socket = useSocket();
+  const { roomId } = useParams();
 
+  const [role, setRole] = useState(null);
   const [stream, setStream] = useState(null);
-  const [remoteStream, setRemoteStream] = useState(null);
   const [connected, setConnected] = useState(false);
 
-  const peerRef = useRef(null);
+  // LIVE INDICATORS STATE
+  const [indicators, setIndicators] = useState({
+    focus: true,
+    mouse: true,
+    fullscreen: true,
+  });
+
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
+  const peerRef = useRef(null);
 
-  // 1) Get camera/mic
+  //  VERIFY ROOM
   useEffect(() => {
-    async function getMedia() {
+    async function verifyRoom() {
       try {
-        const media = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
-        });
+        const res = await axios.post(
+          'http://localhost:3000/api/auth/session/verify-room',
+          { roomId },
+          { withCredentials: true }
+        );
+        setRole(res.data.role);
+      } catch {
+        alert('Invalid or expired room');
+      }
+    }
+    verifyRoom();
+  }, [roomId]);
+
+  //  GET MEDIA
+  useEffect(() => {
+    if (!role) return;
+
+    navigator.mediaDevices
+      .getUserMedia({ video: true, audio: true })
+      .then((media) => {
         setStream(media);
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = media;
         }
-        console.log('Got local media for', role);
-      } catch (err) {
-        console.error('Media error:', err);
-      }
-    }
-    getMedia();
+      })
+      .catch(() => alert('Camera error'));
   }, [role]);
 
-  // 2) Join room + setup SimplePeer signaling
+  //  WEBRTC + SIGNALING
   useEffect(() => {
-    if (!socket || !stream) return;
-
-    console.log('Setting up peer, role =', role, 'roomId =', roomId);
+    if (!socket || !stream || !role) return;
 
     socket.emit('join-room', { roomId, role });
 
-    const isInitiator = role === 'interviewer';
-    console.log('isInitiator:', isInitiator);
-
     const peer = new SimplePeer({
-      initiator: isInitiator,
+      initiator: role === 'interviewer',
       trickle: false,
       stream,
     });
 
     peer.on('signal', (data) => {
-      console.log('peer signal from', role, 'type =', data.type);
       socket.emit('signal', { roomId, data });
     });
 
-    peer.on('connect', () => {
-      console.log('WEBRTC CONNECTED for', role);
-    });
-
     peer.on('stream', (remote) => {
-      console.log('REMOTE STREAM for', role);
       setConnected(true);
-      setRemoteStream(remote);
       if (remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = remote;
       }
     });
 
-    peer.on('error', (err) => console.error('Peer error:', role, err));
+    socket.on('signal', ({ data }) => {
+      peer.signal(data);
+    });
 
     peerRef.current = peer;
 
-    const signalHandler = ({ from, data }) => {
-      console.log('received signal on', role, 'from', from, 'type =', data.type);
-      peer.signal(data);
-    };
-
-    socket.on('signal', signalHandler);
-
-    const userLeftHandler = ({ socketId }) => {
-      console.log('user-left received on', role, 'for socket', socketId);
-      setConnected(false);
-      setRemoteStream(null);
-    };
-
-    socket.on('user-left', userLeftHandler);
-
     return () => {
-      console.log('Cleaning up peer for', role);
-      socket.off('signal', signalHandler);
-      socket.off('user-left', userLeftHandler);
       peer.destroy();
+      socket.off('signal');
     };
-  }, [socket, stream, roomId, role]);
+  }, [socket, stream, role, roomId]);
 
-  // 3) Basic proctoring (interviewee side)
+  //  SEND PROCTOR DATA (INTERVIEWEE)
   useEffect(() => {
     if (!socket || role !== 'interviewee') return;
 
@@ -114,27 +108,29 @@ export default function InterviewRoom({ roomId, role }) {
         mouseActive: Date.now() - lastMouseMove < 5000,
         fullscreen: !!document.fullscreenElement,
         screenSize: `${window.innerWidth}x${window.innerHeight}`,
-        timestamp: Date.now(),
       };
+
       socket.emit('proctor-data', metrics);
-    }, 2000);
+    }, 1000);
 
     return () => {
       window.removeEventListener('mousemove', onMouseMove);
       clearInterval(interval);
     };
-
-  useEffect()
   }, [socket, role]);
 
-  // 4) Receive proctoring (interviewer side)
-  const [proctorEvents, setProctorEvents] = useState([]);
-
+  //  RECEIVE PROCTOR DATA (INTERVIEWER)
   useEffect(() => {
     if (!socket || role !== 'interviewer') return;
 
     const handler = (payload) => {
-      setProctorEvents((prev) => [...prev.slice(-20), payload]); // keep last 20
+
+      // SETTING UP LIVE INDICATORS 
+      setIndicators({
+        focus: payload.metrics.isFocused,
+        mouse: payload.metrics.mouseActive,
+        fullscreen: payload.metrics.fullscreen,
+      });
     };
 
     socket.on('proctor-update', handler);
@@ -144,45 +140,53 @@ export default function InterviewRoom({ roomId, role }) {
     };
   }, [socket, role]);
 
+  if (!role) return <h2>Verifying room...</h2>;
+
   return (
-    <div style={{ display: 'flex', gap: '1rem' }}>
+    <div style={{ display: 'flex', gap: '20px', padding: '20px' }}>
+      {/* LOCAL VIDEO */}
       <div>
-        <h2>You ({role})</h2>
-        <video
-          ref={localVideoRef}
-          autoPlay
-          muted
-          playsInline
-          style={{ width: '320px', background: '#000' }}
-        />
+        <h3>You ({role})</h3>
+        <video ref={localVideoRef} autoPlay muted playsInline width="300" />
       </div>
 
+      {/* REMOTE VIDEO */}
       <div>
-        <h2>{connected ? 'Remote' : 'Waiting...'}</h2>
-        <video
-          ref={remoteVideoRef}
-          autoPlay
-          playsInline
-          style={{ width: '320px', background: '#000' }}
-        />
+        <h3>{connected ? 'Remote User' : 'Waiting...'}</h3>
+        <video ref={remoteVideoRef} autoPlay playsInline width="300" />
       </div>
 
+      {/* INTERVIEWER PANEL */}
       {role === 'interviewer' && (
-        <div style={{ marginLeft: '1rem' }}>
-          <h3>Proctoring feed (last 20)</h3>
-          <ul style={{ maxHeight: '300px', overflow: 'auto', fontSize: '12px' }}>
-            {proctorEvents.map((e, idx) => (
-              <li key={idx}>
-                {new Date(e.at).toLocaleTimeString()} →{' '}
-                focus: {String(e.metrics.isFocused)},{' '}
-                mouse: {String(e.metrics.mouseActive)},{' '}
-                full: {String(e.metrics.fullscreen)},{' '}
-                size: {e.metrics.screenSize}
-              </li>
-            ))}
-          </ul>
+        <div style={{ minWidth: '220px' }}>
+          <h3>Live Proctor Indicators</h3>
+
+          <Indicator label="Tab Focus" ok={indicators.focus} />
+          <Indicator label="Mouse Active" ok={indicators.mouse} />
+          <Indicator label="Fullscreen" ok={indicators.fullscreen} />
+
         </div>
       )}
+    </div>
+  );
+}
+
+/*  Indicator UI Component with temprary styles*/
+function Indicator({ label, ok }) {
+  return (
+    <div
+      style={{
+        padding: '8px',
+        marginBottom: '8px',
+        borderRadius: '6px',
+        background: ok ? '#d4f8d4' : '#ffd6d6',
+        fontWeight: 'bold',
+        display: 'flex',
+        justifyContent: 'space-between',
+      }}
+    >
+      <span>{label}</span>
+      <span>{ok ? '✅ OK' : '⚠️ ALERT'}</span>
     </div>
   );
 }
