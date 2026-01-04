@@ -1,5 +1,4 @@
 const sessionModel = require("../models/session.model");
-const { v4: uuidv4 } = require("uuid");
 
 // CREATE SESSION
 async function createSession(req, res) {
@@ -18,10 +17,13 @@ async function createSession(req, res) {
       });
     }
 
-    const roomId = "CPSB-" + uuidv4().slice(0, 8);
+    const {roomId ,date , from , to} = req.body;
 
     const session = await sessionModel.create({
       roomId,
+      date,
+      from,
+      to,
       hostId: userId
     });
 
