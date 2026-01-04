@@ -7,6 +7,21 @@ const sessionSchema = new mongoose.Schema({
     unique: true,
     required: true
   },
+  date:{
+    type: String,
+    required: true
+
+  },
+  from:{
+    type: String,
+    required: true
+
+  },
+   to:{
+    type: String,
+    required: true
+
+  },
   hostId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"
