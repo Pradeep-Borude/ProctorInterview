@@ -1,62 +1,117 @@
-// src/pages/Home.jsx
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+
 import "../styles/home.css";
-import { useNavigate } from "react-router-dom";
-
-export default function Home() {
+export default function LandingPage() {
   const navigate = useNavigate();
+  
 
-  // Host (interviewer) button
-  const handleHost = () => {
-    // abhi ke liye fixed room id; baad me yahan uuid generate kar sakte ho
-    navigate("/interview?room=test&role=interviewer");
-
-       // simple session/room id (baad me uuid use kar sakte ho)
-    // const roomId = crypto.randomUUID().slice(0, 8);
-
-    // // meeting start time abhi ke liye (ISO string)
-    // const startTime = new Date().toISOString();
-
-    //     navigate(`/interview?room=${roomId}&role=interviewer&start=${encodeURIComponent(startTime)}`);
-
-
-  };
-
-  // Join (interviewee) button
-  const handleJoin = () => {
-    navigate("/interview?room=test&role=interviewee");
-  };
+  const features = [
+    { icon: "🎥", title: "Secure Video Calls", desc: "End-to-end encrypted 1:1 interviews" },
+    { icon: "🛡️", title: "Live Proctoring", desc: "Real-time tab switch & distraction detection" },
+    { icon: "⚡", title: "Instant Setup", desc: "No downloads, works on any device" },
+    { icon: "📊", title: "Risk Reports", desc: "Detailed proctoring analytics post-interview" },
+  ];
 
   return (
-    <div className="home-container">
-      {/* HERO SECTION */}
-      <div className="hero-section">
-        <h1 className="hero-title">ProctorInterview workspace</h1>
-        <p className="hero-subtitle">
-          connect by heart, bridge the distance
-        </p>
-      </div>
+    <>
+       {/* Navbar */}
+     <Navbar/>
+  
+    <div className="page-container">
+      {/* Hero Section */}
+      <section className="hero">
+        <div className="hero-grid">
+          
+          {/* Left Content */}
+          <div className="hero-content">
+            <h1 className="hero-title">
+              Secure Video Interviews <br />
+              <span className="gradient-text">with AI Proctoring</span>
+            </h1>
 
-      <h1 className="hero-title">Welcome</h1>
+            <p className="hero-subtitle">
+              Detect tab switching, distractions & cheating in real-time.
+              Hire confidently with complete session transparency.
+            </p>
 
-      <div className="products-header1"></div>
+            {/* CTAs */}
+            <div className="hero-cta">
+              <button className="custom-hover-btn">
+                <span className="btn-text">HOST INTERVIEW</span>
+                <span className="btn-bg-wrapper">
+                  <span className="btn-bg"></span>
+                </span>
+              </button>
 
-      <div className="btns">
-        <div className="i-buttons">
-          <button className="custom-hover-btn" onClick={handleHost}>
-            <span className="btn-text">Host a Interview</span>
-            <span className="btn-bg-wrapper">
-              <span className="btn-bg"></span>
-            </span>
-          </button>
+              <button className="custom-hover-btn">
+                <span className="btn-text">JOIN INTERVIEW</span>
+                <span className="btn-bg-wrapper">
+                  <span className="btn-bg"></span>
+                </span>
+              </button>
+            </div>
 
-          <button className="custom-hover-btn" onClick={handleJoin}>
-            <span className="btn-text">Join a Interview</span>
-            <span className="btn-bg-wrapper">
-              <span className="btn-bg"></span>
-            </span>
-          </button>
+            {/* Social Proof */}
+            <div className="social-proof">
+              Trusted by 500+ recruiters | 10K+ secure interviews conducted
+            </div>
+          </div>
+
+          {/* Right Visual */}
+          <div className="hero-visual">
+            <div className="mock-card">
+              <div className="mock-layout">
+
+                <div className="video-grid">
+                  <div className="icons">👨‍💼</div>
+                  <div className="icons">👩‍💻</div>
+                </div>
+
+                <div className="proctor-panel">
+                  <div className="panel-title">🛡️ Live Proctor Status</div>
+
+                  <div className="panel-status">
+                    <span className="ok">✅ Tab Focus: OK</span>
+                    <span className="warn">⚠️ Mouse: Idle</span>
+                  </div>
+
+                  <div className="risk">Risk: LOW</div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
         </div>
-      </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="features">
+        <div className="features-container">
+          <h2 className="features-title">Why Choose ProctorInterview?</h2>
+          <p className="features-subtitle">
+            Everything you need for secure, professional remote interviews
+          </p>
+
+          <div className="features-grid">
+            {features.map((feature, i) => (
+              <div key={i} className="feature-card">
+                <div className="feature-icon">{feature.icon}</div>
+                <h3>{feature.title}</h3>
+                <p>{feature.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <Footer />
     </div>
+
+
+              </>
   );
 }
