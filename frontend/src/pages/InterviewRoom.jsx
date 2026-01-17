@@ -3,6 +3,7 @@ import SimplePeer from "simple-peer/simplepeer.min.js";
 import { useSocket } from "../contexts/SocketContext";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import "../styles/InterviewRoom.css";
 
 export default function InterviewRoom() {
   const socket = useSocket();
@@ -13,32 +14,38 @@ export default function InterviewRoom() {
   const [stream, setStream] = useState(null);
   const [connected, setConnected] = useState(false);
 
-  // tracking LIVE INDICATORS 
+  // LIVE INDICATORS
   const [indicators, setIndicators] = useState({
     focus: true,
     mouse: true,
-    fullscreen: true,
+    resize: true,
   });
 
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const peerRef = useRef(null);
 
-  // EVENT COUNTERS (AGGREGATED)
+  // EVENT COUNTERS
   const countersRef = useRef({
     focusLost: 0,
-    fullscreenExit: 0,
+    screenResize: 0,
     inactiveMouse: 0,
   });
 
-  // PREVIOUS METRICS SNAPSHOT
+  // PREVIOUS SNAPSHOT
   const prevMetricsRef = useRef({
     isFocused: true,
     mouseActive: true,
-    fullscreen: true,
+    resize: false,
   });
 
-  // verify ROOM  and the ROLE
+  // RESIZE TRACKER
+  const resizeRef = useRef({
+    resized: false,
+    timer: null,
+  });
+
+  // VERIFY ROOM
   useEffect(() => {
     async function verifyRoom() {
       try {
@@ -55,7 +62,7 @@ export default function InterviewRoom() {
     verifyRoom();
   }, [roomId]);
 
-  // GET USERS CAMERA and MIC
+  // GET MEDIA
   useEffect(() => {
     if (!role) return;
 
@@ -70,7 +77,7 @@ export default function InterviewRoom() {
       .catch(() => alert("Camera / Mic error"));
   }, [role]);
 
-  // WEBRTC + SIGNALING (offer , sdp created)
+  // WEBRTC
   useEffect(() => {
     if (!socket || !stream || !role) return;
 
@@ -105,7 +112,7 @@ export default function InterviewRoom() {
     };
   }, [socket, stream, role, roomId]);
 
-  // SEND PROCTOR DATA ( from INTERVIEWEE)
+  // SEND PROCTOR DATA (INTERVIEWEE)
   useEffect(() => {
     if (!socket || role !== "interviewee") return;
 
@@ -115,66 +122,68 @@ export default function InterviewRoom() {
       lastMouseMove = Date.now();
     };
 
+    const onResize = () => {
+      resizeRef.current.resized = true;
+
+      clearTimeout(resizeRef.current.timer);
+      resizeRef.current.timer = setTimeout(() => {
+        resizeRef.current.resized = false;
+      }, 1000);
+    };
+
     window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("resize", onResize);
 
     const interval = setInterval(() => {
       socket.emit("proctor-data", {
         isFocused: document.hasFocus(),
         mouseActive: Date.now() - lastMouseMove < 2000,
-        fullscreen: !!document.fullscreenElement,
+        resize: resizeRef.current.resized,
       });
-    }, 500);
+    }, 1000);
 
     return () => {
       window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("resize", onResize);
       clearInterval(interval);
     };
   }, [socket, role]);
 
-  // RECEIVE + AGGREGATE ( to INTERVIEWER)
+  // RECEIVE + AGGREGATE (INTERVIEWER)
   useEffect(() => {
     if (!socket || role !== "interviewer") return;
 
     const handler = (payload) => {
-      const { isFocused, mouseActive, fullscreen } = payload.metrics;
+      const { isFocused, mouseActive, resize } = payload.metrics;
       const prev = prevMetricsRef.current;
-
-      //  COUNT OF PROCTOR EVENTS HAPPINING
+// checks for prevous state && current state to increment counters
       if (prev.isFocused && !isFocused)
         countersRef.current.focusLost++;
 
       if (prev.mouseActive && !mouseActive)
         countersRef.current.inactiveMouse++;
 
-      if (prev.fullscreen && !fullscreen)
-        countersRef.current.fullscreenExit++;
+      if (!prev.resize && resize)
+        countersRef.current.screenResize++;
 
-      prevMetricsRef.current = { isFocused, mouseActive, fullscreen };
+      prevMetricsRef.current = { isFocused, mouseActive, resize };
 
       setIndicators({
         focus: isFocused,
         mouse: mouseActive,
-        fullscreen,
+        resize: !resize,
       });
     };
 
     socket.on("proctor-update", handler);
-
-    return () => {
-      socket.off("proctor-update", handler);
-    };
+    return () => socket.off("proctor-update", handler);
   }, [socket, role]);
 
-  // RISK CALCULATION FUNCTION
-  const calculateRiskScore = (counters) => {
-    return (
-      counters.focusLost * 2 +
-      counters.fullscreenExit * 3 +
-      counters.inactiveMouse * 1
-    );
-  };
-
-  // status CALCULATION FUNCTION
+  // RISK SCORE
+  const calculateRiskScore = (counters) =>
+    counters.focusLost * 2 +
+    counters.screenResize * 3 +
+    counters.inactiveMouse * 1;
 
   const calculateStatus = (score) => {
     if (score >= 20) return "HIGH_RISK";
@@ -182,42 +191,28 @@ export default function InterviewRoom() {
     return "NORMAL";
   };
 
-
-
-  // end call HANDLER (disconnect sockets , cleans up resources , send data )
-
+  // END CALL
   const handleEndCall = async () => {
-    const confirmed = window.confirm(
-      "Are you sure you want to end the interview call? This action cannot be undone."
-    );
-
+    const confirmed = window.confirm("End interview?");
     if (!confirmed) return;
 
     try {
       socket.emit("leave-room", { roomId });
 
-      if (peerRef.current) {
-        peerRef.current.destroy();
-        peerRef.current = null;
-      }
-
+      peerRef.current?.destroy();
       stream?.getTracks().forEach((t) => t.stop());
 
-      // {role check} ONLY INTERVIEWER CAN SUBMIT PROCTOR DATA
       if (role === "interviewer") {
         const counters = countersRef.current;
         const riskScore = calculateRiskScore(counters);
         const status = calculateStatus(riskScore);
-
-        console.log("FINAL COUNTERS:", counters);
-        console.log("RISK:", riskScore, status);
 
         await axios.post(
           "http://localhost:3000/api/auth/session/end",
           {
             roomId,
             focusLostCount: counters.focusLost,
-            fullscreenExitCount: counters.fullscreenExit,
+            screenResizeCount: counters.screenResize,
             inactiveMouseCount: counters.inactiveMouse,
             riskScore,
             status,
@@ -228,69 +223,76 @@ export default function InterviewRoom() {
 
       navigate("/dashboard");
     } catch (err) {
-      console.error("Error ending session", err);
+      console.error(err);
     }
   };
 
   if (!role) return <h2>Verifying room...</h2>;
 
   return (
-    <div style={{ display: "flex", gap: "20px", padding: "20px" }}>
-      <div>
-        <h3>You ({role})</h3>
-        <video ref={localVideoRef} autoPlay muted playsInline width="300" />
-      </div>
+    <>
+      <div className="proctor-panel">
+        <div className="localVideoRefContainer">
+          <h3>You ({role})</h3>
+          <video ref={localVideoRef} autoPlay muted playsInline />
+        </div>
 
-      <div>
-        <h3>{connected ? "Remote User" : "Waiting..."}</h3>
-        <video ref={remoteVideoRef} autoPlay playsInline width="300" />
-      </div>
+        <div className="RemoteVideoRefContainer">
+          <h3>{connected ? "Remote User" : "Waiting..."}</h3>
+          <video ref={remoteVideoRef} autoPlay muted playsInline />
+        </div>
 
-      {/* SHOW PROCTOR INDICATORS ONLY TO INTERVIEWER */}
+        <button className="endBTN" onClick={handleEndCall}>
+          End Call
+        </button>
+      </div>
 
       {role === "interviewer" && (
-        <div style={{ minWidth: "220px" }}>
-          <h3>Live Proctor Indicators</h3>
-          <Indicator label="Tab Focus" ok={indicators.focus} />
-          <Indicator label="Mouse Active" ok={!indicators.mouse} />
-          <Indicator label="Fullscreen" ok={indicators.fullscreen} />
+        <div className="proctorEventContainer">
+          <div className="proctor-header">
+            <div className="header-icon">🔍</div>
+            <h1>Live Proctor Indicators</h1>
+            <div 
+              className="status-dot" 
+              style={{ 
+                backgroundColor: 
+                  indicators.focus && 
+                  indicators.mouse && 
+                  !indicators.screenResize ? '#10b981' : '#ef4444'
+              }}
+            />
+          </div>
+        
+
+<div className="indicators-grid">
+
+          <Indicator label="Tab Focus" ok={indicators.focus} icon="📱" />
+          <Indicator label="Mouse Activity" ok={indicators.mouse} icon="🖱️" />
+          <Indicator label="Screen Resize" ok={indicators.resize} icon="🖥️" />
+</div>
         </div>
       )}
-
-      <button
-        onClick={handleEndCall}
-        style={{
-          marginTop: "20px",
-          padding: "10px 16px",
-          background: "#e74c3c",
-          color: "#fff",
-          border: "none",
-          borderRadius: "6px",
-          cursor: "pointer",
-        }}
-      >
-        End Call
-      </button>
-    </div>
+    </>
   );
 }
 
-    // INDICATOR COMPONENT
-function Indicator({ label, ok }) {
+function Indicator({ label, ok, icon }) {
   return (
-    <div
-      style={{
-        padding: "8px",
-        marginBottom: "8px",
-        borderRadius: "6px",
-        background: ok ? "#d4f8d4" : "#ffd6d6",
-        fontWeight: "bold",
-        display: "flex",
-        justifyContent: "space-between",
-      }}
-    >
-      <span>{label}</span>
-      <span>{ok ? "✅ OK" : "⚠️ ALERT"}</span>
+    <div className={`indicator ${ok ? 'success' : 'alert'}`}>
+      <div className="indicator-left">
+        <div className="icon-wrapper">
+          <span className="indicator-icon">{icon}</span>
+        </div>
+        <div className="indicator-content">
+          <div className="label">{label}</div>
+          <div className={`status-text ${ok ? 'success-text' : 'alert-text'}`}>
+            {ok ? 'OK' : 'ALERT'}
+          </div>
+        </div>
+      </div>
+      <div className={`status-badge ${ok ? 'success' : 'alert'}`}>
+        {ok ? '✅ OK' : '⚠️ ALERT'}
+      </div>
     </div>
   );
 }
