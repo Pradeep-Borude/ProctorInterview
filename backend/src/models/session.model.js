@@ -38,7 +38,7 @@ const sessionSchema = new mongoose.Schema({
 
   // PROCTOR DATA
   focusLostCount: { type: Number, default: 0 },
-  fullscreenExitCount: { type: Number, default: 0 },
+   screenResizeCount: { type: Number, default: 0 },
   inactiveMouseCount: { type: Number, default: 0 },
   riskScore: { type: Number, default: 0 },
   riskStatus: {

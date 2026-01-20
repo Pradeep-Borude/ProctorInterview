@@ -83,7 +83,7 @@ async function endSession(req, res) {
     const {
       roomId,
       focusLostCount,
-      fullscreenExitCount,
+      screenResizeCount,
       inactiveMouseCount,
       riskScore,
       status
@@ -96,7 +96,7 @@ async function endSession(req, res) {
     }
 
     session.focusLostCount = focusLostCount;
-    session.fullscreenExitCount = fullscreenExitCount;
+    session.screenResizeCount = screenResizeCount;
     session.inactiveMouseCount = inactiveMouseCount;
     session.riskScore = riskScore;
     session.riskStatus = status;
