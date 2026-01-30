@@ -1,4 +1,4 @@
-import '../styles/auth.css';
+import '../styles/forms.css';
 import React from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -13,6 +13,7 @@ export default function UserRegister() {
     const email = event.target.email.value;
     const role = event.target.role.value;
     const password = event.target.password.value;
+      const confirmPassword = event.target.confirmPassword.value;
 
     if (!role) {
       alert('Please select a role');
@@ -22,12 +23,12 @@ export default function UserRegister() {
     try {
       const response = await axios.post(
         'http://localhost:3000/api/auth/user/register',
-        { fullName, email, password, role },
+        { fullName, email, password, confirmPassword, role },
         { withCredentials: true }
       );
 
       alert(response.data.message);
- navigate(`/user/${response.data.user.role}/${response.data.user._id}`);
+ navigate(`/user/${response.data.user._id}`);
     } catch (error) {
       const msg = error.response?.data?.message || 'Registration failed';
       alert(msg);
@@ -35,14 +36,14 @@ export default function UserRegister() {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-wrapper">
-        <div className="auth-card">
-          <div className="auth-header">
-            <span className="auth-logo">ProctorInterview</span>
-            <h1 className="auth-title">Create Account</h1>
-            <p className="auth-subtitle">
-              Connected by heart, Bridge the distance
+    <div className="form-container">
+      <div className="form-wrapper">
+        <div className="form-card">
+          <div className="form-header">
+            <span className="form-logo">ProctorInterview</span>
+            <h1 className="form-title">Create Account</h1>
+            <p className="form-subtitle">
+             connecting hearts , bridging the distance
             </p>
           </div>
 
@@ -113,6 +114,21 @@ export default function UserRegister() {
               />
             </div>
 
+            <div className="form-group">
+              <label className="form-label" htmlFor="confirmPassword">
+                Confirm Password
+              </label>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                className="form-input"
+                placeholder="Create a strong password"
+                required
+                minLength={6}
+              />
+            </div>
+
             {/* Terms */}
             <div className="checkbox-group">
               <input
@@ -135,10 +151,10 @@ export default function UserRegister() {
            <div className="form-divider">
             <span className="form-divider-text">or</span>
           </div>
-          <div className="auth-footer">
-            <span className="auth-footer-text">
+          <div className="form-footer">
+            <span className="form-footer-text">
               Already have an account?
-              <a href="/user/login" className="auth-footer-link">
+              <a href="/user/login" className="form-footer-link">
                 Sign In
               </a>
             </span>

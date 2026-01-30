@@ -11,6 +11,7 @@
 /* Header */
 .dashboard-header {
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 40px;
@@ -19,9 +20,16 @@
 }
 
 .dashboard-header h1 {
+  display: flex;
   color: var(--text-primary);
   font-size: 28px;
   margin: 0;
+}
+
+.dashboard-header div{
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
 }
 
 .logout-btn {
@@ -36,7 +44,7 @@
 }
 
 .logout-btn:hover {
-  background: #d32f2f;
+  background: var(--error-color);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);
 }
@@ -44,7 +52,7 @@
 /* Error Banner */
 .error-banner {
   background: #ffebee;
-  color: #c62828;
+  color: var(--error-color);
   padding: 12px 16px;
   border-radius: 8px;
   margin-bottom: 20px;

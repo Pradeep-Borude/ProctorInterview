@@ -1,4 +1,4 @@
-import '../styles/auth.css';
+import '../styles/forms.css';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
   
@@ -20,7 +20,7 @@ const navigate = useNavigate();
     );  
 
     console.log(response.data);
-    navigate(`/user/${response.data.user.role}/${response.data.user._id}`);
+    navigate(`/`);
 
   } catch (err) {
     const msg = err.response?.data?.message || "Something went wrong";
@@ -29,13 +29,13 @@ const navigate = useNavigate();
 };
 
   return (
-    <div className="auth-container">
-      <div className="auth-wrapper">
-        <div className="auth-card">
-          <div className="auth-header">
-            <span className="auth-logo">ProctorInterview</span>
-            <h1 className="auth-title">Welcome Back</h1>
-            <p className="auth-subtitle">Sign in to your account to continue</p>
+    <div className="form-container">
+      <div className="form-wrapper">
+        <div className="form-card">
+          <div className="form-header">
+            <span className="form-logo">ProctorInterview</span>
+            <h1 className="form-title">Welcome Back</h1>
+            <p className="form-subtitle">Sign in to your account to continue</p>
           </div>
 
           <form onSubmit={handleSubmit}>
@@ -65,17 +65,6 @@ const navigate = useNavigate();
               <span className="form-error">Password is incorrect</span>
             </div>
 
-            <div className="checkbox-group">
-              <input
-                id="rememberMe"
-                type="checkbox"
-                className="checkbox-input"
-              />
-              <label htmlFor="rememberMe" className="checkbox-label">
-                Remember me for 30 days
-              </label>
-            </div>
-
             <button type="submit" className="submit-btn">
               Sign In
             </button>
@@ -85,17 +74,17 @@ const navigate = useNavigate();
             <span className="form-divider-text">or</span>
           </div>
 
-          <div className="auth-footer">
-            <span className="auth-footer-text">
+          <div className="form-footer">
+            <span className="form-footer-text">
               Don't have an account?
-              <a href="/user/register" className="auth-footer-link">
+              <a href="/user/register" className="form-footer-link">
                 Create one now
               </a>
             </span>
           </div>
 
-          <div className="auth-footer" style={{ marginTop: '16px', paddingTop: '0', borderTop: 'none' }}>
-            <a href="/forgot-password" className="auth-footer-link" style={{ marginLeft: '0' }}>
+          <div className="form-footer" style={{ marginTop: '16px', paddingTop: '0', borderTop: 'none' }}>
+            <a href="/forgot-password" className="form-footer-link" style={{ marginLeft: '0' }}>
               Forgot your password?
             </a>
           </div>
