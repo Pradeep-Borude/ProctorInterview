@@ -1,15 +1,26 @@
 // src/App.jsx
 import { BrowserRouter as Router, Routes, Route, useSearchParams } from "react-router-dom";
+
+// contexts
 import { SocketProvider } from "./contexts/SocketContext";
+import { AuthProvider } from "./contexts/AuthContext";
+
+import "./styles/global.css";
+
+
+// different pages
 import InterviewRoom from "./pages/InterviewRoom";
 import Home from "./pages/Home";
 import UserLogin from "./pages/UserLogin";
 import UserRegister from "./pages/UserRegister";
 import UserDashboard from "./pages/UserDashboard";
-import "./styles/global.css";
 import HostInterview from "./pages/HostInterview";
 import JoinRoom from "./pages/JoinRoom";
+import PageNotFound from "./pages/PageNotFound";
 
+import { ProtectedRoute, UserAlreadyLoggedIn } from "./components/ProtectedRoute"; // protected routes
+
+// room wrapper to extract query params
 function InterviewRoomWrapper() {
   const [searchParams] = useSearchParams();
   const roomId = searchParams.get("roomId") || "test-room";
@@ -23,22 +34,53 @@ function InterviewRoomWrapper() {
 
 export default function App() {
   return (
-    <SocketProvider>
-      <Router>
-        <div >
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/user/login" element={<UserLogin />} />
-            <Route path="/user/register" element={<UserRegister />} />
-            <Route path="/dashboard" element={<UserDashboard />} />
-            <Route path="/hostInterview" element={<HostInterview />} />
-            <Route path="/interview/:roomId" element={<InterviewRoomWrapper />} />
-            <Route path="/joinroom" element={<JoinRoom />} />
-                <Route path="*" element={<Home />} />
-                {/* https://i.pinimg.com/originals/f3/56/3e/f3563e945aa9c7c37dccacf53ba603a0.gif */}
-          </Routes>
-        </div>
-      </Router>
-    </SocketProvider>
+    <AuthProvider>
+      <SocketProvider>
+        <Router>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/user/login" element={
+                <UserAlreadyLoggedIn>
+                  <UserLogin />
+                </UserAlreadyLoggedIn>
+              }
+              />
+              <Route path="/user/register" element={
+                <UserAlreadyLoggedIn>
+                  <UserRegister />
+                </UserAlreadyLoggedIn>
+              } />
+
+
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <UserDashboard />
+                </ProtectedRoute>} />
+
+              <Route path="/user/:userId" element={
+                <ProtectedRoute>
+                  <UserDashboard />
+                </ProtectedRoute>} />
+
+              <Route path="/hostInterview" element={
+                <ProtectedRoute>
+                  <HostInterview />
+                </ProtectedRoute>} />
+
+              <Route path="/interview/:roomId" element={
+                <ProtectedRoute>
+                  <InterviewRoomWrapper />
+                </ProtectedRoute>} />
+
+              <Route path="/joinroom" element={
+                <ProtectedRoute>
+                  <JoinRoom />
+                </ProtectedRoute>} />
+
+              <Route path="*" element={<PageNotFound />} />
+            </Routes>
+        </Router>
+      </SocketProvider>
+    </AuthProvider>
   );
 }
