@@ -13,13 +13,12 @@ export default function JoinRoom() {
 
     try {
       const response = await axios.post(
-        'http://localhost:3000/api/auth/session/verify-room',
+        'http://localhost:3000/api/session/verify-room',
         { roomId },
         { withCredentials: true }
       );
 
       const { roomId: verifiedRoomId, role } = response.data;
-console.log('Room verified:', verifiedRoomId, role);
       navigate(`/interview/${verifiedRoomId}`, {
         state: { role }
       });

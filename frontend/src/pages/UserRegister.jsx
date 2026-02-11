@@ -2,9 +2,11 @@ import '../styles/forms.css';
 import React from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function UserRegister() {
   const navigate = useNavigate();
+  const { setUser } = useAuth();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -13,7 +15,7 @@ export default function UserRegister() {
     const email = event.target.email.value;
     const role = event.target.role.value;
     const password = event.target.password.value;
-      const confirmPassword = event.target.confirmPassword.value;
+    const confirmPassword = event.target.confirmPassword.value;
 
     if (!role) {
       alert('Please select a role');
@@ -27,8 +29,9 @@ export default function UserRegister() {
         { withCredentials: true }
       );
 
-      alert(response.data.message);
- navigate(`/user/${response.data.user._id}`);
+      setUser(response.data.user);
+
+      navigate('/dashboard');
     } catch (error) {
       const msg = error.response?.data?.message || 'Registration failed';
       alert(msg);
@@ -43,12 +46,11 @@ export default function UserRegister() {
             <span className="form-logo">ProctorInterview</span>
             <h1 className="form-title">Create Account</h1>
             <p className="form-subtitle">
-             connecting hearts , bridging the distance
+              connecting hearts , bridging the distance
             </p>
           </div>
 
           <form onSubmit={handleSubmit}>
-            {/* Full Name */}
             <div className="form-group">
               <label className="form-label" htmlFor="fullName">
                 Full Name
@@ -63,7 +65,6 @@ export default function UserRegister() {
               />
             </div>
 
-            {/* Email */}
             <div className="form-group">
               <label className="form-label" htmlFor="email">
                 Email Address
@@ -78,7 +79,6 @@ export default function UserRegister() {
               />
             </div>
 
-            {/* Role Dropdown */}
             <div className="form-group">
               <label className="form-label" htmlFor="role">
                 Select Role
@@ -98,7 +98,6 @@ export default function UserRegister() {
               </select>
             </div>
 
-            {/* Password */}
             <div className="form-group">
               <label className="form-label" htmlFor="password">
                 Password
@@ -129,7 +128,6 @@ export default function UserRegister() {
               />
             </div>
 
-            {/* Terms */}
             <div className="checkbox-group">
               <input
                 id="terms"
@@ -147,10 +145,10 @@ export default function UserRegister() {
             </button>
           </form>
 
-          {/* Footer */}
-           <div className="form-divider">
+          <div className="form-divider">
             <span className="form-divider-text">or</span>
           </div>
+
           <div className="form-footer">
             <span className="form-footer-text">
               Already have an account?
@@ -159,10 +157,6 @@ export default function UserRegister() {
               </a>
             </span>
           </div>
-
-         
-
-         
         </div>
       </div>
     </div>

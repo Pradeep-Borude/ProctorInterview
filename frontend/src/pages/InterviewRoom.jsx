@@ -3,9 +3,11 @@ import SimplePeer from "simple-peer/simplepeer.min.js";
 import { useSocket } from "../contexts/SocketContext";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useSessionRefresh } from "../contexts/SessionContext";
 import "../styles/InterviewRoom.css";
 
 export default function InterviewRoom() {
+  const { triggerRefresh } = useSessionRefresh();
   const socket = useSocket();
   const { roomId } = useParams();
   const navigate = useNavigate();
@@ -50,7 +52,7 @@ export default function InterviewRoom() {
     async function verifyRoom() {
       try {
         const res = await axios.post(
-          "http://localhost:3000/api/auth/session/verify-room",
+          "http://localhost:3000/api/session/verify-room",
           { roomId },
           { withCredentials: true }
         );
@@ -208,7 +210,7 @@ export default function InterviewRoom() {
         const status = calculateStatus(riskScore);
 
         await axios.post(
-          "http://localhost:3000/api/auth/session/end",
+          "http://localhost:3000/api/session/end",
           {
             roomId,
             focusLostCount: counters.focusLost,
@@ -222,6 +224,7 @@ export default function InterviewRoom() {
       }
 
       navigate("/dashboard");
+    triggerRefresh();
     } catch (err) {
       console.error(err);
     }

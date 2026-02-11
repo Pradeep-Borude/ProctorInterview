@@ -1,32 +1,34 @@
 import '../styles/forms.css';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-  
+import { useAuth } from '../contexts/AuthContext';
+
 export default function UserLogin() {
-const navigate = useNavigate();
+  const navigate = useNavigate();
+  const { setUser } = useAuth();
 
-  
   const handleSubmit = async (event) => {
-  event.preventDefault();
+    event.preventDefault();
 
-  const email = event.target.email.value;
-  const password = event.target.password.value;
+    const email = event.target.email.value;
+    const password = event.target.password.value;
 
-  try {
-    const response = await axios.post(
-      'http://localhost:3000/api/auth/user/login',
-      { email, password },
-      { withCredentials: true }
-    );  
+    try {
+      const response = await axios.post(
+        'http://localhost:3000/api/auth/user/login',
+        { email, password },
+        { withCredentials: true }
+      );
 
-    console.log(response.data);
-    navigate(`/`);
+      setUser(response.data.user);
 
-  } catch (err) {
-    const msg = err.response?.data?.message || "Something went wrong";
-    alert(msg); 
-  }
-};
+      navigate('/dashboard'); 
+
+    } catch (err) {
+      const msg = err.response?.data?.message || "Something went wrong";
+      alert(msg);
+    }
+  };
 
   return (
     <div className="form-container">
@@ -45,11 +47,12 @@ const navigate = useNavigate();
               </label>
               <input
                 id="email"
+                name="email"
                 type="email"
                 className="form-input"
                 placeholder="you@example.com"
+                required
               />
-              <span className="form-error">Please enter a valid email</span>
             </div>
 
             <div className="form-group">
@@ -58,11 +61,12 @@ const navigate = useNavigate();
               </label>
               <input
                 id="password"
+                name="password"
                 type="password"
                 className="form-input"
                 placeholder="Enter your password"
+                required
               />
-              <span className="form-error">Password is incorrect</span>
             </div>
 
             <button type="submit" className="submit-btn">
@@ -83,12 +87,14 @@ const navigate = useNavigate();
             </span>
           </div>
 
-          <div className="form-footer" style={{ marginTop: '16px', paddingTop: '0', borderTop: 'none' }}>
-            <a href="/forgot-password" className="form-footer-link" style={{ marginLeft: '0' }}>
+          <div
+            className="form-footer"
+            style={{ marginTop: '16px', paddingTop: '0', borderTop: 'none' }}
+          >
+            <a href="/forgot-password" className="form-footer-link">
               Forgot your password?
             </a>
           </div>
-
         </div>
       </div>
     </div>

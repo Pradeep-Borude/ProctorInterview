@@ -2,9 +2,12 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { useSessionRefresh } from "../contexts/SessionContext";
 
 
 export default function HostInterview() {
+  const { triggerRefresh } = useSessionRefresh();
+
   const navigate = useNavigate();
   const [roomId, setRoomId] = useState("");
 
@@ -16,12 +19,13 @@ export default function HostInterview() {
 
     try {
 
-      const response = await axios.post(
-        "http://localhost:3000/api/auth/session/create",
+       await axios.post(
+        "http://localhost:3000/api/session/create",
         { roomId, date, from, to },
         { withCredentials: true }
       );
-      console.log("Interview session created:", response.data);
+    triggerRefresh();
+
     } catch (error) {
       console.error("Error hosting interview:", error);
       return;
@@ -31,7 +35,6 @@ export default function HostInterview() {
   useEffect(() => {
     const roomId = "CPSB-" + uuidv4().slice(0, 8);
     setRoomId(roomId);
-    console.log(roomId);
   }, [])
 
   return (
