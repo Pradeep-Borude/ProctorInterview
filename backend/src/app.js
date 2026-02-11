@@ -3,7 +3,8 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
-const authRoutes = require('./routes/auth.routes'); 
+const AuthRoutes = require('./routes/auth.routes'); 
+const SessionRoutes = require('./routes/session.routes'); 
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.get('/', (req, res) => {
   res.send('Interview video server running');
 });
 
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', AuthRoutes);
+app.use('/api/session', SessionRoutes);
 
 module.exports = app;
