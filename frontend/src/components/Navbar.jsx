@@ -20,7 +20,7 @@ export default function Navbar() {
 
           <Link 
   to="/" 
-  className="icon-link"  // New class
+  className="icon-link"  
   style={{ textDecoration: 'none', color: 'inherit' }}
 >
   <div className='icons'>
@@ -31,7 +31,7 @@ export default function Navbar() {
 
 <Link 
   to="/dashboard" 
-  className="icon-link"  // New class
+  className="icon-link"  
   style={{ textDecoration: 'none', color: 'inherit' }}
 >
   <div className='icons'>
