@@ -115,8 +115,28 @@ async function endSession(req, res) {
   }
 }
 
+
+async function getMySessions(req, res) {
+  try {
+    const sessions = await sessionModel.find({
+      hostId: req.user.id,
+    }).sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      sessions,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch sessions',
+    });
+  }
+};
+
 module.exports = {
   createSession,
   verifyRoom,
-  endSession 
+  endSession,
+  getMySessions 
 };
