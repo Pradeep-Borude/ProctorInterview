@@ -221,3 +221,25 @@
   background: #374151;
   transition: background 0.2s ease;
 }
+
+
+
+.session-row {
+  cursor: pointer;
+}
+
+.details-row td {
+  background: #0f172a;
+  padding: 16px;
+}
+
+.details-box {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  color: #e5e7eb;
+}
+
+.risk-normal { color: #22c55e; font-weight: 600; }
+.risk-warning { color: #f59e0b; font-weight: 600; }
+.risk-high { color: #ef4444; font-weight: 600; }
